@@ -4,10 +4,7 @@ import asyncio
 from abc import abstractmethod
 from typing import Any
 
-from src.common.logger import Logger
 from src.modules.shared.config.application.ports.config_manager import ConfigManager
-
-logger = Logger.get_instance(__name__)
 
 
 class SecretManager(ConfigManager):
@@ -40,11 +37,12 @@ class SecretManager(ConfigManager):
             try:
                 value, refresh_in = await self._fetch_one(key)
                 self._config[key] = value
+                self._notify(key, value)
                 retries = 0
             except Exception:
                 retries += 1
                 if retries >= self._max_retries:
-                    logger.critical(f"Secret rotation failed for '{key}' after {self._max_retries} retries")
+                    self._logger.critical(f"Secret rotation failed for '{key}' after {self._max_retries} retries")
                     raise
-                logger.warning(f"Secret rotation failed for '{key}', retry {retries}/{self._max_retries}")
+                self._logger.warning(f"Secret rotation failed for '{key}', retry {retries}/{self._max_retries}")
                 await asyncio.sleep(min(refresh_in * 0.1, 30))
