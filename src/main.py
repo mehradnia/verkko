@@ -1,3 +1,3 @@
-from src.app import create_app
+from src.app import App
 
-app = create_app()
+app = App().fastapi
