@@ -15,10 +15,11 @@ class SqlAlchemyAdapter(PersistencePort):
 
     _logger = Logger.get_instance(__name__)
 
-    def __init__(self, host: str, port: int, name: str, credentials: dict[str, str]) -> None:
+    def __init__(self, host: str, port: int, name: str, credentials: dict[str, str], ssl: bool = True) -> None:
         self._host = host
         self._port = port
         self._name = name
+        self._ssl = ssl
         self._engine: AsyncEngine | None = None
         self._session_factory: async_sessionmaker[AsyncSession] | None = None
         self._credentials = credentials
@@ -34,9 +35,10 @@ class SqlAlchemyAdapter(PersistencePort):
         self._logger.info("Database credentials rotated, connection pool restarted")
 
     def _build_engine(self, credentials: dict[str, str]) -> None:
+        ssl_param = "?ssl=true" if self._ssl else ""
         url = (
             f"postgresql+asyncpg://{credentials['username']}:{credentials['password']}"
-            f"@{self._host}:{self._port}/{self._name}?ssl=true"
+            f"@{self._host}:{self._port}/{self._name}{ssl_param}"
         )
         self._engine = create_async_engine(url, pool_size=10, max_overflow=5)
         self._session_factory = async_sessionmaker(self._engine, expire_on_commit=False)
