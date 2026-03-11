@@ -11,3 +11,8 @@ services:
     volumes:
       - ../src:/app/src
       - ../tests:/app/tests
+
+networks:
+  default:
+    external: true
+    name: verkko-app-dev

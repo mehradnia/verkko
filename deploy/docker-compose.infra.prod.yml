@@ -1,0 +1,61 @@
+services:
+  vault:
+    image: hashicorp/vault
+    container_name: verkko-vault
+    ports:
+      - "8200:8200"
+    volumes:
+      - vault-data:/vault/data
+      - ./vault/vault-prod.hcl:/vault/config/vault.hcl
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=/vault/config/vault.hcl
+    restart: unless-stopped
+    networks:
+      - verkko-infra-prod
+      - verkko-app-prod
+
+  db:
+    image: postgres:17-alpine
+    container_name: verkko-db
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./envs/.env.db.prod
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - verkko-infra-prod
+      - verkko-app-prod
+
+  vault-init:
+    image: hashicorp/vault
+    container_name: verkko-vault-init
+    volumes:
+      - ./vault/vault-init.sh:/vault-init.sh
+    environment:
+      VAULT_ADDR: http://vault:8200
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: verkko_db
+      DB_ADMIN_USER: ${POSTGRES_USER}
+      DB_ADMIN_PASS: ${POSTGRES_PASSWORD}
+    entrypoint: sh /vault-init.sh
+    depends_on:
+      - vault
+      - db
+    restart: "no"
+    networks:
+      - verkko-infra-prod
+
+networks:
+  verkko-infra-prod:
+    name: verkko-infra-prod
+  verkko-app-prod:
+    name: verkko-app-prod
+
+volumes:
+  vault-data:
+  db-data:
