@@ -9,12 +9,11 @@ from src.modules.shared.config.application.ports.config_manager import ConfigMan
 
 class EnvManager(ConfigManager):
 
-    def __init__(self, keys: list[str], schema: type[BaseModel] | None = None) -> None:
+    def __init__(self, schema: type[BaseModel]) -> None:
         super().__init__(schema)
-        self._keys = keys
 
     async def _fetch(self) -> None:
-        for key in self._keys:
+        for key in self._schema.model_fields:
             value = os.environ.get(key)
             if value is not None:
                 self._config[key] = value
