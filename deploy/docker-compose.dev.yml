@@ -1,0 +1,13 @@
+services:
+  app:
+    build:
+      context: ..
+      target: development
+    container_name: verkko-service-dev
+    ports:
+      - "8001:80"
+    env_file:
+      - ./envs/.env.dev
+    volumes:
+      - ../src:/app/src
+      - ../tests:/app/tests
