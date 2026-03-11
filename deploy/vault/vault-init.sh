@@ -24,7 +24,7 @@ vault secrets enable database 2>/dev/null || true
 vault write database/config/verkko-db \
   plugin_name=postgresql-database-plugin \
   allowed_roles="verkko-service" \
-  connection_url="postgresql://{{username}}:{{password}}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" \
+  connection_url="postgresql://{{username}}:{{password}}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require" \
   username="$DB_ADMIN_USER" \
   password="$DB_ADMIN_PASS"
 
