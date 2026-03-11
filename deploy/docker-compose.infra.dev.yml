@@ -27,8 +27,9 @@ services:
         -c ssl_key_file=/var/lib/postgresql/server.key
     volumes:
       - db-data-dev:/var/lib/postgresql/data
-      - ./certs/server.crt:/var/lib/postgresql/server.crt:ro
-      - ./certs/server.key:/var/lib/postgresql/server.key:ro
+      # In production, certs should be injected via CI/CD pipeline secrets
+      - ./certs/server.crt.example:/var/lib/postgresql/server.crt:ro
+      - ./certs/server.key.example:/var/lib/postgresql/server.key:ro
     networks:
       - verkko-infra-dev
       - verkko-app-dev

@@ -13,6 +13,8 @@ venv/
 env/
 .env
 deploy/envs/.env.*
+deploy/certs/server.crt
+deploy/certs/server.key
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
