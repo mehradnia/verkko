@@ -77,9 +77,15 @@ Commands and queries are separated into distinct types and use cases. This makes
 - **Validation errors** (`RequestValidationError`) — returned as 400 with field-level messages.
 - **Unhandled exceptions** — returned as 500 with a generic message (no internal details leaked), logged server-side.
 
-### Secret Management
+## Security
 
-The service integrates with HashiCorp Vault for dynamic database credentials. Vault issues short-lived credentials with automatic rotation via a subscribe/callback mechanism, eliminating static passwords from configuration.
+### SSL/TLS
+
+All database connections are encrypted via SSL. PostgreSQL is configured with server certificates, and the application enforces `sslmode=require` to prevent unencrypted connections — even in the development environment. Certificates are mounted into the database container; in production, they would be injected via CI/CD pipeline secrets.
+
+### Secret Rotation
+
+The service integrates with HashiCorp Vault for dynamic database credentials instead of static passwords in environment variables. Vault issues short-lived credentials scoped to the service's role, and the application subscribes to credential changes via a callback mechanism. When Vault rotates credentials, the database adapter transparently reconnects with the new credentials — zero-downtime rotation with no redeployment required.
 
 ## Setup Instructions
 
@@ -260,10 +266,6 @@ While the scope of this task is small, the architecture demonstrates how the ser
 ### Why CQRS?
 
 Separating commands from queries makes each operation explicit and independently testable. In a production system, this separation enables different optimization strategies for reads vs writes (e.g., read replicas, caching, event sourcing).
-
-### Why Vault for Secrets?
-
-Static database credentials in environment variables are a security risk. Vault provides dynamic, short-lived credentials with automatic rotation. The service subscribes to credential changes and transparently reconnects — zero-downtime rotation.
 
 ### What Would Be Different in Production?
 
