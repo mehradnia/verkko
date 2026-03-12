@@ -9,8 +9,7 @@ from fastapi.responses import JSONResponse
 from src.common.exceptions import AppException
 from src.common.response import ApiResponse
 from src.container import Container
-from src.modules.inventory_record.presentation import router as inventory_record_router
-from src.modules.shared.health import router as health_router
+from src.routes import register_routes
 
 
 class App:
@@ -37,8 +36,7 @@ class App:
         yield
 
     def _register_routes(self) -> None:
-        self._fastapi.include_router(health_router)
-        self._fastapi.include_router(inventory_record_router)
+        register_routes(self._fastapi, self._container)
 
     def _register_exception_handlers(self) -> None:
         @self._fastapi.exception_handler(AppException)

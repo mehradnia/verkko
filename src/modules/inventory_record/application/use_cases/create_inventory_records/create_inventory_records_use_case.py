@@ -4,11 +4,11 @@ from src.modules.inventory_record.application.ports.inventory_repository import 
 from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_command import (
     CreateInventoryRecordsCommand,
 )
-from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_mapper import (
-    CreateInventoryRecordsMapper,
-)
 from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_result import (
     CreateInventoryRecordsResult,
+)
+from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_mapper import (
+    CreateInventoryRecordsMapper,
 )
 from src.modules.inventory_record.domain.entities.inventory_record import InventoryRecord
 

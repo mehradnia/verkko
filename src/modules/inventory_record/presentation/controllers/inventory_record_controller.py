@@ -1,47 +1,49 @@
-from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from src.common.response import ApiResponse
-from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_command import (
+from src.common.api_route import ApiRoute
+from src.modules.inventory_record.application import (
     CreateInventoryRecordItem,
     CreateInventoryRecordsCommand,
+    InventoryRecordFacade,
 )
-from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_use_case import (
-    CreateInventoryRecordsUseCase,
-)
-from src.modules.inventory_record.container import InventoryContainer
 from src.modules.inventory_record.presentation.dtos import (
     CreateInventoryRecordsRequestDto,
     CreateInventoryRecordsResponseDto,
     InventoryRecordResponseDto,
 )
 
-router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
+class InventoryRecordController:
 
-@router.post("/update")
-@inject
-async def create_inventory_records(
-    body: CreateInventoryRecordsRequestDto,
-    use_case: CreateInventoryRecordsUseCase = Depends(
-        Provide[InventoryContainer.create_use_case]
-    ),
-):
-    command = CreateInventoryRecordsCommand(
-        items=[
-            CreateInventoryRecordItem(
-                product_id=item.productid,
-                quantity=item.quantity,
-                timestamp=item.timestamp,
-            )
-            for item in body.items
-        ]
-    )
+    def __init__(self, service: InventoryRecordFacade) -> None:
+        self._service = service
+        self._router = APIRouter(prefix="/inventory", tags=["Inventory"], route_class=ApiRoute)
+        self._register_routes()
 
-    result = await use_case.execute(command)
+    @property
+    def router(self) -> APIRouter:
+        return self._router
 
-    return ApiResponse.ok(
-        data=CreateInventoryRecordsResponseDto(
+    def _register_routes(self) -> None:
+        self._router.post("/update")(self.create_inventory_records)
+
+    async def create_inventory_records(
+        self, body: CreateInventoryRecordsRequestDto,
+    ):
+        command = CreateInventoryRecordsCommand(
+            items=[
+                CreateInventoryRecordItem(
+                    product_id=item.productid,
+                    quantity=item.quantity,
+                    timestamp=item.timestamp,
+                )
+                for item in body.items
+            ]
+        )
+
+        result = await self._service.create_inventory_records(command)
+
+        return CreateInventoryRecordsResponseDto(
             records=[
                 InventoryRecordResponseDto(
                     id=record.id,
@@ -53,4 +55,3 @@ async def create_inventory_records(
             ],
             count=result.count,
         )
-    )
