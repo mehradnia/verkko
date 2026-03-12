@@ -4,9 +4,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class InventoryRecordResponseDto(BaseModel):
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    model_config = ConfigDict(from_attributes=True)
 
     id: int
-    productid: str = Field(alias="product_id")
+    productid: str = Field(validation_alias="product_id")
     quantity: int
     timestamp: datetime
