@@ -18,3 +18,4 @@ class ConfigSchema(BaseModel):
     DB_PORT: int = Field(default=5432, ge=1, le=65535)
     DB_NAME: str
     DB_SSL: str = "true"
+    DB_SYNC: str = "false"

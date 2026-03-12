@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dependency_injector import containers, providers
 
+from src.modules.inventory_record.infrastructure.entities.inventory_record_sqlalchemy import Base as InventoryBase
 from src.modules.shared.database.infrastructure.adapters.sqlalchemy_adapter import SqlAlchemyAdapter
 
 
@@ -16,4 +17,6 @@ class DatabaseContainer(containers.DeclarativeContainer):
         name=providers.Callable(lambda c: c.get("DB_NAME") or "verkko_db", config.env),
         credentials=providers.Callable(lambda c: c.get("db"), config.secrets),
         ssl=providers.Callable(lambda c: c.get("DB_SSL") != "false", config.env),
+        sync=providers.Callable(lambda c: c.get("DB_SYNC") == "true", config.env),
+        entities=[InventoryBase],
     )

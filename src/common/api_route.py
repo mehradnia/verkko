@@ -1,5 +1,5 @@
+import json
 from collections.abc import Callable
-from typing import Any
 
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -16,13 +16,10 @@ class ApiRoute(APIRoute):
         async def wrapped_handler(request: Request) -> Response:
             response = await original_handler(request)
 
-            if isinstance(response, JSONResponse):
-                return response
+            body = json.loads(response.body)
 
-            body = response.body
-            if isinstance(body, bytes):
-                import json
-                body = json.loads(body)
+            if isinstance(body, dict) and "success" in body:
+                return response
 
             wrapped = ApiResponse.ok(data=body)
             return JSONResponse(

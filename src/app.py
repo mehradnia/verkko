@@ -17,7 +17,6 @@ class App:
     def __init__(self) -> None:
         self._container = Container()
         self._fastapi = FastAPI(lifespan=self._lifespan)
-        self._register_routes()
         self._register_exception_handlers()
 
     @asynccontextmanager
@@ -32,6 +31,8 @@ class App:
         await db.start_sessions()
 
         secrets.subscribe("db", lambda _k, v: db.restart_sessions(v))
+
+        self._register_routes()
 
         yield
 
