@@ -21,6 +21,13 @@ class CreateInventoryRecordsUseCase(BaseUseCase[CreateInventoryRecordsCommand, C
         self._repository = repository
 
     async def _execute(self, command: CreateInventoryRecordsCommand) -> CreateInventoryRecordsResult:
+        # TODO: Idempotency must be ensured here. Possible approaches:
+        #  1. Unique constraint on a domain key (e.g. product_id + timestamp), depending on business rules.
+        #  2. Dedicated idempotency table — store an idempotency key per request and leverage
+        #     DB transactions (unit of work) to guarantee atomicity between the check and the insert.
+        #  3. Caching (e.g. Redis) — lightweight but carries a minor risk of data inconsistency,
+        #     so the tradeoff depends on how strict idempotency needs to be for this domain.
+
         self._logger.info(f"Creating {len(command.items)} inventory records")
 
         records = [
