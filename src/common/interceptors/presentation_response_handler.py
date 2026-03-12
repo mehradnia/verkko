@@ -5,10 +5,10 @@ from fastapi import Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from src.common.response import ApiResponse
+from src.common.dtos import PresentationResponse
 
 
-class ApiRoute(APIRoute):
+class PresentationResponseHandler(APIRoute):
 
     def get_route_handler(self) -> Callable:
         original_handler = super().get_route_handler()
@@ -21,7 +21,7 @@ class ApiRoute(APIRoute):
             if isinstance(body, dict) and "success" in body:
                 return response
 
-            wrapped = ApiResponse.ok(data=body)
+            wrapped = PresentationResponse.ok(data=body)
             return JSONResponse(
                 status_code=response.status_code,
                 content=wrapped.model_dump(),

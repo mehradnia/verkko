@@ -8,6 +8,9 @@ from src.modules.inventory_record.application.services.inventory_record_applicat
 from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_use_case import (
     CreateInventoryRecordsUseCase,
 )
+from src.modules.inventory_record.application.use_cases.search_inventory_record.search_inventory_record_use_case import (
+    SearchInventoryRecordUseCase,
+)
 from src.modules.inventory_record.infrastructure.adapters.sqlalchemy_inventory_repository import (
     SqlAlchemyInventoryRepository,
 )
@@ -30,9 +33,15 @@ class InventoryContainer(containers.DeclarativeContainer):
         repository=repository,
     )
 
+    search_use_case = providers.Factory(
+        SearchInventoryRecordUseCase,
+        repository=repository,
+    )
+
     application_service = providers.Factory(
         InventoryRecordApplicationService,
         create_inventory_records_use_case=create_use_case,
+        search_inventory_record_use_case=search_use_case,
     )
 
     controller = providers.Singleton(

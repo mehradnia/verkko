@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class CreatedInventoryRecordItem:
+class InventoryRecordItem:
     id: int
     product_id: str
     quantity: int
@@ -12,5 +12,5 @@ class CreatedInventoryRecordItem:
 
 @dataclass(frozen=True)
 class CreateInventoryRecordsResult:
-    records: list[CreatedInventoryRecordItem]
+    records: list[InventoryRecordItem]
     count: int

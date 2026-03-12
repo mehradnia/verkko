@@ -1,15 +1,12 @@
-from datetime import datetime
+from pydantic import BaseModel, ConfigDict
 
-from pydantic import BaseModel
-
-
-class InventoryRecordResponseDto(BaseModel):
-    id: int
-    productid: str
-    quantity: int
-    timestamp: datetime
+from src.modules.inventory_record.presentation.dtos.inventory_record_response_dto import (
+    InventoryRecordResponseDto,
+)
 
 
 class CreateInventoryRecordsResponseDto(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     records: list[InventoryRecordResponseDto]
     count: int

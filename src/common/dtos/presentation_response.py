@@ -6,7 +6,7 @@ from pydantic import BaseModel
 T = TypeVar("T")
 
 
-class ApiResponse(BaseModel, Generic[T]):
+class PresentationResponse(BaseModel, Generic[T]):
     success: bool
     data: T | None = None
     message: str | None = None
@@ -14,8 +14,8 @@ class ApiResponse(BaseModel, Generic[T]):
     timestamp: str
 
     @staticmethod
-    def ok(data: Any = None, message: str | None = None) -> "ApiResponse":
-        return ApiResponse(
+    def ok(data: Any = None, message: str | None = None) -> "PresentationResponse":
+        return PresentationResponse(
             success=True,
             data=data,
             message=message,
@@ -23,8 +23,8 @@ class ApiResponse(BaseModel, Generic[T]):
         )
 
     @staticmethod
-    def fail(error: str, message: str | None = None) -> "ApiResponse":
-        return ApiResponse(
+    def fail(error: str, message: str | None = None) -> "PresentationResponse":
+        return PresentationResponse(
             success=False,
             error=error,
             message=message,

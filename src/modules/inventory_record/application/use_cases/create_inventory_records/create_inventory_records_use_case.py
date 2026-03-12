@@ -1,5 +1,5 @@
 from src.common.logger import Logger
-from src.common.use_case import BaseUseCase
+from src.common.abstracts import BaseUseCase
 from src.modules.inventory_record.application.ports.inventory_repository import InventoryRepository
 from src.modules.inventory_record.application.use_cases.create_inventory_records.create_inventory_records_command import (
     CreateInventoryRecordsCommand,

@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from src.common.exceptions import AppException
-from src.common.response import ApiResponse
+from src.common.dtos import PresentationResponse
 from src.container import Container
 from src.routes import register_routes
 
@@ -44,7 +44,7 @@ class App:
         async def handle_app_exception(_request: Request, exc: AppException) -> JSONResponse:
             return JSONResponse(
                 status_code=exc.exception_type,
-                content=ApiResponse.fail(
+                content=PresentationResponse.fail(
                     error=exc.code,
                     message=exc.message,
                 ).model_dump(),
