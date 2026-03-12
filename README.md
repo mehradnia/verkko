@@ -4,7 +4,7 @@ A product inventory management microservice built with FastAPI, SQLAlchemy, and 
 
 ## Architecture Overview
 
-The project is organized as a modular monolith, where each module is self-contained and follows a layered architecture. The layers enforce a strict dependency rule: inner layers never depend on outer layers.
+The project is organized as a modular monolith where each module is self-contained and follows a layered architecture. The layers enforce a strict dependency rule: inner layers never depend on outer layers.
 
 ```
 src/
@@ -30,27 +30,27 @@ The innermost layer contains the core business rules. The `InventoryRecord` enti
 
 Orchestrates business operations through the **CQRS pattern** (Command Query Responsibility Segregation):
 
-- **Commands** — `CreateInventoryRecordsCommand` carries write intent with its data.
-- **Queries** — `SearchInventoryRecordQuery` carries read intent with filter/pagination parameters.
-- **Use Cases** — Each operation is a dedicated class (`CreateInventoryRecordsUseCase`, `SearchInventoryRecordUseCase`) extending `BaseUseCase`, responsible for a single action.
-- **Mappers** — Transform domain entities into result types, keeping mapping logic isolated.
-- **Ports** — `InventoryRepository` is an abstract interface that the domain defines and the infrastructure implements (Dependency Inversion).
-- **Facade** — `InventoryRecordFacade` is an abstract contract that the presentation layer depends on. `InventoryRecordApplicationService` implements it and delegates to the appropriate use case.
+- **Commands**: `CreateInventoryRecordsCommand` carries write intent with its data.
+- **Queries**: `SearchInventoryRecordQuery` carries read intent with filter and pagination parameters.
+- **Use Cases**: Each operation is a dedicated class (`CreateInventoryRecordsUseCase`, `SearchInventoryRecordUseCase`) extending `BaseUseCase`, responsible for a single action.
+- **Mappers**: Transform domain entities into result types, keeping mapping logic isolated.
+- **Ports**: `InventoryRepository` is an abstract interface that the domain defines and the infrastructure implements (Dependency Inversion).
+- **Facade**: `InventoryRecordFacade` is an abstract contract that the presentation layer depends on. `InventoryRecordApplicationService` implements it and delegates to the appropriate use case.
 
 ### Infrastructure Layer
 
 Implements the ports defined by the application layer:
 
-- **SQLAlchemy ORM Entity** — `InventoryRecordSqlAlchemy` maps to the `inventory_records` table with indexed columns (`product_id`, `timestamp`) for query performance.
-- **Repository** — `SqlAlchemyInventoryRepository` implements `InventoryRepository`, handling all database operations including pagination with separate `COUNT` and `SELECT` queries.
+- **SQLAlchemy ORM Entity**: `InventoryRecordSqlAlchemy` maps to the `inventory_records` table with indexed columns (`product_id`, `timestamp`) for query performance.
+- **Repository**: `SqlAlchemyInventoryRepository` implements `InventoryRepository`, handling all database operations including pagination with separate `COUNT` and `SELECT` queries.
 
 ### Presentation Layer
 
 Handles HTTP concerns and is the only layer aware of FastAPI:
 
-- **Controllers** — `InventoryRecordController` registers routes and translates HTTP requests into application commands/queries. Uses Pydantic's `model_validate` (equivalent to NestJS `plainToInstance`) for automatic result-to-DTO mapping.
-- **DTOs** — Separate request and response DTOs with Pydantic validation. `InventoryRecordResponseDto` uses `validation_alias` to map internal `product_id` to the API's `productid` convention.
-- **Response Standardization** — `PresentationResponseHandler` (a custom `APIRoute` subclass, analogous to a NestJS interceptor) wraps all controller responses in a consistent `PresentationResponse` envelope (`success`, `data`, `message`, `error`, `timestamp`).
+- **Controllers**: `InventoryRecordController` registers routes and translates HTTP requests into application commands/queries. Uses Pydantic's `model_validate` for automatic result-to-DTO mapping.
+- **DTOs**: Separate request and response DTOs with Pydantic validation. `InventoryRecordResponseDto` uses `validation_alias` to map internal `product_id` to the API's `productid` convention.
+- **Response Standardization**: `PresentationResponseHandler` (a custom `APIRoute` subclass) wraps all controller responses in a consistent `PresentationResponse` envelope (`success`, `data`, `message`, `error`, `timestamp`).
 
 ## Design Patterns
 
@@ -60,32 +60,32 @@ The project uses `dependency-injector` for IoC. Each module has its own `Declara
 
 ### Facade Pattern
 
-The application layer exposes an abstract `InventoryRecordFacade` as its public API. The presentation layer depends only on this contract — it never directly references use cases or repositories. This decouples layers and makes the application service the single entry point for all module operations.
+The application layer exposes an abstract `InventoryRecordFacade` as its public API. The presentation layer depends only on this contract and never directly references use cases or repositories. This decouples layers and makes the application service the single entry point for all module operations.
 
 ### Port-Adapter Pattern (Hexagonal Architecture)
 
-Domain and application layers define abstract ports (`InventoryRepository`, `PersistencePort`). Infrastructure provides concrete adapters (`SqlAlchemyInventoryRepository`, `SqlAlchemyAdapter`). Swapping databases or ORMs requires only a new adapter — no changes to business logic.
+Domain and application layers define abstract ports (`InventoryRepository`, `PersistencePort`). Infrastructure provides concrete adapters (`SqlAlchemyInventoryRepository`, `SqlAlchemyAdapter`). Swapping databases or ORMs requires only a new adapter with no changes to business logic.
 
 ### CQRS
 
-Commands and queries are separated into distinct types and use cases. This makes the codebase easier to reason about, test, and scale independently (read-heavy vs write-heavy paths could be optimized separately).
+Commands and queries are separated into distinct types and use cases. This makes the codebase easier to reason about, test, and scale independently. Read-heavy and write-heavy paths can be optimized separately (e.g. read replicas, caching, event sourcing).
 
 ### Exception Filter
 
 `ExceptionFilter` centralizes all error handling in one class, registered on the FastAPI app. It handles:
-- **Domain/Application errors** (`AppException`) — mapped to appropriate HTTP status codes.
-- **Validation errors** (`RequestValidationError`) — returned as 400 with field-level messages.
-- **Unhandled exceptions** — returned as 500 with a generic message (no internal details leaked), logged server-side.
+- **Domain/Application errors** (`AppException`): mapped to appropriate HTTP status codes.
+- **Validation errors** (`RequestValidationError`): returned as 400 with field-level messages.
+- **Unhandled exceptions**: returned as 500 with a generic message (no internal details leaked), logged server-side.
 
 ## Security
 
 ### SSL/TLS
 
-All database connections are encrypted via SSL. PostgreSQL is configured with server certificates, and the application enforces `sslmode=require` to prevent unencrypted connections — even in the development environment. Certificates are mounted into the database container; in production, they would be injected via CI/CD pipeline secrets.
+All database connections are encrypted via SSL. PostgreSQL is configured with server certificates and the application enforces `sslmode=require` to prevent unencrypted connections, even in the development environment. In development, example certificates are mounted into the database container. In production, these should be injected via CI/CD pipeline secrets rather than stored in the repository.
 
 ### Secret Rotation
 
-The service integrates with HashiCorp Vault for dynamic database credentials instead of static passwords in environment variables. Vault issues short-lived credentials scoped to the service's role, and the application subscribes to credential changes via a callback mechanism. When Vault rotates credentials, the database adapter transparently reconnects with the new credentials — zero-downtime rotation with no redeployment required.
+The service integrates with HashiCorp Vault for dynamic database credentials instead of static passwords in environment variables. Vault issues short-lived credentials scoped to the service's role, and the application subscribes to credential changes via a callback mechanism. When Vault rotates credentials, the database adapter transparently reconnects with the new credentials. This provides zero-downtime rotation with no redeployment required.
 
 ## Setup Instructions
 
@@ -253,7 +253,7 @@ curl "http://localhost:8000/inventory/query?productid=SKU12345&starttimestamp=20
 
 ### Why FastAPI?
 
-FastAPI provides async support out of the box, automatic OpenAPI documentation, and native Pydantic integration for request validation — making it ideal for building high-performance APIs with minimal boilerplate.
+FastAPI provides async support out of the box, automatic OpenAPI documentation, and native Pydantic integration for request validation. This makes it ideal for building high-performance APIs with minimal boilerplate.
 
 ### Why SQLAlchemy?
 
@@ -261,17 +261,25 @@ SQLAlchemy is the most mature Python ORM with excellent async support via `async
 
 ### Why DDD and Clean Architecture?
 
-While the scope of this task is small, the architecture demonstrates how the service would scale in a real system. Each layer has a clear responsibility, dependencies point inward, and swapping infrastructure (e.g., switching from PostgreSQL to another store) requires no changes to business logic. The trade-off is more files and indirection for a simple CRUD service, but this pays off as complexity grows.
+While the scope of this task is small, the architecture demonstrates how the service would scale in a real system. Each layer has a clear responsibility, dependencies point inward, and swapping infrastructure (e.g. switching from PostgreSQL to another store) requires no changes to business logic. The trade-off is more files and indirection for a simple CRUD service, but this pays off as complexity grows.
 
 ### Why CQRS?
 
-Separating commands from queries makes each operation explicit and independently testable. In a production system, this separation enables different optimization strategies for reads vs writes (e.g., read replicas, caching, event sourcing).
+Separating commands from queries makes each operation explicit and independently testable. In a production system, this separation enables different optimization strategies for reads vs writes (e.g. read replicas, caching, event sourcing).
+
+### Noted Decisions
+
+The following decisions are documented as comments in the codebase, left intentionally for future implementation:
+
+- **Idempotency** (`CreateInventoryRecordsUseCase`): Idempotency must be ensured on the write path. Possible approaches include a unique constraint on a domain key (e.g. `product_id + timestamp` depending on business rules), a dedicated idempotency table leveraging DB transactions (unit of work) for atomicity, or a caching layer like Redis for lightweight checks. Caching carries a minor risk of data inconsistency, so the tradeoff depends on how strict idempotency needs to be for this domain.
+
+- **Database Migrations** (`SqlAlchemyAdapter`): In development, the ORM auto-syncs the schema to the database (controlled by the `DB_SYNC` env variable). In production, this should be replaced with Alembic versioned migrations for safe, auditable schema changes.
+
+- **SSL Certificates** (`docker-compose.infra.*.yml`): Development uses example certificates mounted into the database container. In production, real certificates should be injected via CI/CD pipeline secrets rather than stored in the repository.
 
 ### What Would Be Different in Production?
 
-- **Idempotency** — Ensure duplicate requests don't create duplicate records (via unique constraints, an idempotency table, or request-level caching depending on domain rules).
-- **Testing** — Comprehensive unit tests for domain logic, integration tests with a real database, and contract tests for the API.
-- **Observability** — Structured logging, distributed tracing (OpenTelemetry), and metrics (Prometheus).
-- **Rate Limiting** — Protect the ingestion endpoint from abuse.
-- **CI/CD** — Automated linting, testing, building, and deployment pipeline.
-- **Database Migrations** — Alembic for versioned schema migrations instead of auto-sync.
+- **Testing**: Unit tests for domain logic, integration tests with a real database, and contract tests for the API.
+- **Observability**: Structured logging, distributed tracing (OpenTelemetry), and metrics (Prometheus).
+- **Rate Limiting**: Protect the ingestion endpoint from abuse.
+- **CI/CD**: Automated linting, testing, building, and deployment pipeline.
